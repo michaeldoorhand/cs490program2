@@ -1,46 +1,37 @@
 #lang racket
 
-
-
-
-
-
-
-
-
-
-
 (define (read-file file-name) 
   (file->string file-name #:mode 'text))
 
-(define (clean-file input-string final-string)
-  (let ([char (read-char (open-input-string input-string))])
-    (cond
-      [(eof-object? char) final-string]
-      [(char-upper-case? char) (clean-file (substring input-string 1) (string-append final-string (make-string 1 (char-downcase char))))]
-      [(equal? char #\")       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\,)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\.)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\?)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\!)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\-)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\_)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\:)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\;)       (clean-file (substring input-string 1) (string-append final-string " "))]
-      [(equal? char #\newline) (clean-file (substring input-string 1) (string-append final-string " "))]
-      [else                    (clean-file (substring input-string 1) (string-append final-string (make-string 1 char)))])))
+(define (clean-file input-string)
+  (string-downcase (regexp-replace* #px"\\s{2,}" (regexp-replace* #px"[[\\]$#,\".?!\n_\\-:;]" input-string " ") " ")))
 
-(define (string-to-list input-string final-list)
-    (let ([char (read-char (open-input-string input-string))])
-      (cond
-        [(eof-object? char) final-list]
-        [(equal? char " ") (string-to-list (substring input-string 1) final-list)]
-        [else (string-to-list (substring input-string 1) (cons (string-append (first final-list) (make-string 1 char))(rest final-list)))])))
-       
-(define (make-string-hash input-list)
-  (define (list-to-hash input final-hash)
-   (display "y"))
-
-  (list-to-hash input-list (hash "!" 0)))
+(define (string-to-hash input-string)
+  (define (make-count-hash input-list final-hash)
+    (if (empty? input-list) final-hash
+    (let ([word (first input-list)])
+      (if (equal? word "") (make-count-hash (rest input-list) final-hash)
+      (if (hash-has-key? final-hash word)
+          (make-count-hash (rest input-list) (hash-set final-hash word (+ (hash-ref final-hash word) 1)))
+          (make-count-hash (rest input-list) (hash-set final-hash word 1)))))))
+  (make-count-hash (regexp-split #rx" " input-string) (hash)))
   
-(define start (display (string-to-list (clean-file (read-file "test.txt") "")'(""))))
+(define (make-frequency-hash input-hash)
+  (let ([total (foldl + 0 (hash-values input-hash))])
+  (hash-map/copy input-hash (lambda (k v) (values k (* (log (/ v total) 10) -1))))))
+
+(define (get-rarity-hash file-name)
+  (make-frequency-hash (string-to-hash (clean-file (read-file file-name)))))
+
+(define (make-rarity-table file-list table-hash)
+  (if (empty? file-list) table-hash
+  (let ([file-name (first file-list)])
+    (make-rarity-table (rest file-list) (hash-set table-hash file-name (get-rarity-hash file-name))))))
+
+(define (analyze-text control-hash input-mystery-hash)
+  (let* ([mystery-hash (values input-mystery-hash)])
+    
+    (display mystery-words)))
+
+ (display (analyze-text (make-rarity-table '("test.txt" "test2.txt")(hash)) (make-rarity-table '("test.txt")(hash))))
+
