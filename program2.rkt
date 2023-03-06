@@ -28,10 +28,22 @@
   (let ([file-name (first file-list)])
     (make-rarity-table (rest file-list) (hash-set table-hash file-name (get-rarity-hash file-name))))))
 
-(define (analyze-text control-hash input-mystery-hash)
-  (let* ([mystery-hash (values input-mystery-hash)])
-    
-    (display mystery-words)))
+(define (analyze-text control-table input-mystery-table)
+  (define (compare-two control-hash mystery-hash results)
+    (if (hash-empty? mystery-hash) results 
+  (let ([mystery-word (first (hash-keys mystery-hash))]
+        [mystery-value (first (hash-values mystery-hash))])
+            (if (hash-has-key? control-hash mystery-word)
+                (compare-two control-hash
+                             (hash-remove mystery-hash mystery-word)
+                             (hash-set results mystery-word (abs (- mystery-value (hash-ref control-hash mystery-word))))) 
+                (compare-two control-hash (hash-remove mystery-hash mystery-word) results)))))
+        
+  
+  (compare-two (hash-ref control-table (first (hash-keys control-table)))
+               (hash-ref input-mystery-table (first (hash-keys input-mystery-table)))
+               (hash)))
 
- (display (analyze-text (make-rarity-table '("test.txt" "test2.txt")(hash)) (make-rarity-table '("test.txt")(hash))))
-
+(define (foo 
+ (display (analyze-text (make-rarity-table '("test.txt" "test2.txt")(hash)) (make-rarity-table '("mysterytest.txt" "mysterytest2.txt")(hash))))
+;(display (hash-ref (make-rarity-table '("test.txt" "test2.txt")(hash)))     )
